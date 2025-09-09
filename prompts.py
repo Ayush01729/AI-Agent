@@ -40,7 +40,11 @@ SYSTEM_PROMPT = (
 )
 
 
-USER_PROMPT = """Mall Data:
+USER_PROMPT = """
+Chat history:
+{chat_history}
+
+Mall Data:
 {context}
 
 User Query: {query}
