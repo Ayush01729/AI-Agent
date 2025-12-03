@@ -30,7 +30,7 @@ import streamlit as st
 from queryRunner import run_query
 
 st.set_page_config(page_title="MallBuddy Chat", layout="wide")
-st.title("Lido Mall Shopping Assistant")
+st.title("Lulu Mall Shopping Assistant")
 
 # Initialize chat history
 if "messages" not in st.session_state:
