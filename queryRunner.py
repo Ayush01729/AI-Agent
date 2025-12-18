@@ -13,8 +13,13 @@ def run_query(query: str) -> str:
 	response = chain.invoke({"context": context, "query": query})
 	return response['text']
 
+async def run_query_async(query: str) -> str:
+    response = await chain.ainvoke({"context": context, "query": query})
+    return response['text']
+
 
 if __name__ == "__main__":
 	query = "suggest me nice places for family dinner"
 	print(run_query(query))
 
+# Faiss
