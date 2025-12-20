@@ -2,3 +2,19 @@ venv/
 __pycache__/
 .env
 .devcontainer/
+
+
+# Test files
+test_profiling.py
+test_streaming.py
+profiling.py
+
+MIGRATION_SUMMARY.MD
+PROFILING_GUIDE.MD
+
+# Sentence transformers cache
+.cache/
+
+requirements_new.txt
+
+frontend_example.html
