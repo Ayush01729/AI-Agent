@@ -2,8 +2,10 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_community.chat_message_histories import ChatMessageHistory
 from prompts import prompt, prompt_streaming
-from langchain_classic.memory import ConversationBufferWindowMemory
-from langchain_classic.chains import LLMChain
+# from langchain_classic.memory import ConversationBufferWindowMemory
+# from langchain_classic.chains import LLMChain
+from langchain.memory import ConversationBufferWindowMemory
+from langchain.chains import LLMChain
 from typing import Dict
 import time
 
