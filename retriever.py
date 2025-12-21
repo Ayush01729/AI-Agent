@@ -23,8 +23,6 @@ import asyncio
 from functools import lru_cache
 import hashlib
 
-# Import profiling utilities
-from profiling import PerformanceTimer
 
 logger = logging.getLogger(__name__)
 
