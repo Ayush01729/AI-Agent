@@ -7,7 +7,6 @@ __pycache__/
 # Test files
 test_profiling.py
 test_streaming.py
-profiling.py
 
 MIGRATION_SUMMARY.MD
 PROFILING_GUIDE.MD
