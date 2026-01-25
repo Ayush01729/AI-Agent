@@ -164,5 +164,46 @@ async def chat_stream_v1(request: ChatRequest):
         logger.error(f"Error setting up streaming v1: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error setting up streaming v1: {str(e)}")
 
+@app.post("/chat/dlf/v1")
+async def chat_dlf_stream_v1(request: ChatRequest):
+    """
+    Streaming endpoint for DLF Mall - uses DLF-specific prompts.
+    Returns tokens as they arrive from the LLM using Server-Sent Events.
+    Frontend should use EventSource or fetch with streaming to consume this.
+    """
+    try:
+        if not request.query or request.query.strip() == "":
+            raise HTTPException(status_code=400, detail="Query cannot be empty")
+        
+        async def event_generator():
+            """Generate Server-Sent Events format"""
+            try:
+                async for chunk in run_query_streaming(request.query, session_id=request.session_id, prompt_module="prompts_dlf"):
+                    # Send as SSE format: "data: <json>\n\n"
+                    yield f"data: {chunk}\n\n"
+                
+                # Send completion signal
+                done_msg = json.dumps({"done": True})
+                yield f"data: {done_msg}\n\n"
+            except Exception as e:
+                logger.error(f"Error in DLF streaming: {str(e)}")
+                error_msg = json.dumps({"error": str(e)})
+                yield f"data: {error_msg}\n\n"
+        
+        return StreamingResponse(
+            event_generator(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+                "Content-Type": "text/event-stream; charset=utf-8",
+                "X-API-Version": "v1-dlf-mall"  # Version indicator
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error setting up DLF streaming: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error setting up DLF streaming: {str(e)}")
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -51,7 +51,13 @@ CACHE_TTL_SECONDS = 3600
 MAX_CACHE_SIZE = 50
 
 # Initialize streaming chain with automatic history management
+# Note: This is the default chain using 'prompts' module
 streaming_chain_with_history = build_streaming_chain_with_history(llm)
+
+# Cache for different prompt modules' chains
+_prompt_chains = {
+    'prompts': streaming_chain_with_history
+}
 
 # Initialize the FAISS retriever (loads index once at startup)
 # This replaces the expensive Excel loading and full-context approach
@@ -187,7 +193,7 @@ async def run_query_async(query: str, session_id: str = "default") -> str:
     return response_text
 
 
-async def run_query_streaming(query: str, session_id: str = "default") -> AsyncGenerator[str, None]:
+async def run_query_streaming(query: str, session_id: str = "default", prompt_module: str = "prompts") -> AsyncGenerator[str, None]:
     """
     Streaming with automatic conversation history management.
     Uses LangChain's RunnableWithMessageHistory for production-grade memory.
@@ -195,6 +201,7 @@ async def run_query_streaming(query: str, session_id: str = "default") -> AsyncG
     Args:
         query: User's natural language query
         session_id: Unique session identifier for multi-user support
+        prompt_module: Name of the prompt module to use (default: "prompts")
         
     Yields:
         JSON-formatted strings containing either tokens or error messages
@@ -204,9 +211,16 @@ async def run_query_streaming(query: str, session_id: str = "default") -> AsyncG
         return
     
     try:
+        # Get or create chain for this prompt module
+        if prompt_module not in _prompt_chains:
+            logger.debug(f"Creating new chain for prompt module: {prompt_module}")
+            _prompt_chains[prompt_module] = build_streaming_chain_with_history(llm, prompt_module)
+        
+        streaming_chain = _prompt_chains[prompt_module]
+        
         # Check cache first
         query_normalized = query.strip().lower()
-        cache_key = hashlib.md5(query_normalized.encode()).hexdigest()
+        cache_key = hashlib.md5(f"{prompt_module}:{query_normalized}".encode()).hexdigest()
         
         current_time = time.time()
         if cache_key in _response_cache:
@@ -246,7 +260,7 @@ async def run_query_streaming(query: str, session_id: str = "default") -> AsyncG
         # 1. Loads conversation history
         # 2. Streams tokens in real-time
         # 3. Saves conversation after completion
-        async for chunk in streaming_chain_with_history.astream(
+        async for chunk in streaming_chain.astream(
             {"context": context, "query": query},
             config={"configurable": {"session_id": session_id}}
         ):

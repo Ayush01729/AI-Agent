@@ -8,6 +8,7 @@ from langchain.memory import ConversationBufferWindowMemory
 from langchain.chains import LLMChain
 from typing import Dict
 import time
+import importlib
 
 # Session-based message stores for RunnableWithMessageHistory
 _session_stores: Dict[str, ChatMessageHistory] = {}
@@ -76,7 +77,7 @@ def build_streaming_chain(llm):
     return prompt_streaming | llm | StrOutputParser()
 
 
-def build_streaming_chain_with_history(llm):
+def build_streaming_chain_with_history(llm, prompt_module=None):
     """
     Build streaming chain with automatic message history management.
     Uses LangChain's RunnableWithMessageHistory for production-grade memory.
@@ -85,8 +86,28 @@ def build_streaming_chain_with_history(llm):
     - Loads conversation history before generating
     - Streams tokens in real-time
     - Saves conversation after streaming completes
+    
+    Args:
+        llm: Language model to use
+        prompt_module: Module name (str) or module object containing prompt_streaming.
+                      If None, defaults to 'prompts' module.
     """
-    base_chain = build_streaming_chain(llm)
+    # Import the appropriate prompt module
+    if prompt_module is None:
+        prompt_module = 'prompts'
+    
+    if isinstance(prompt_module, str):
+        # Import module by name
+        prompt_mod = importlib.import_module(prompt_module)
+    else:
+        # Use the provided module object
+        prompt_mod = prompt_module
+    
+    # Get prompt_streaming from the module
+    prompt_streaming_to_use = prompt_mod.prompt_streaming
+    
+    # Build base chain with the selected prompt
+    base_chain = prompt_streaming_to_use | llm | StrOutputParser()
     
     chain_with_history = RunnableWithMessageHistory(
         base_chain,
